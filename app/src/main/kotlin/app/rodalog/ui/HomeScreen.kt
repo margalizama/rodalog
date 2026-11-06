@@ -84,7 +84,9 @@ fun HomeScreen(vm: AppViewModel, go: (String) -> Unit) {
     val monthSpend = fuel.filter { it.date >= monthStart }.sumOf { it.totalCost } +
         exp.filter { it.date >= monthStart }.sumOf { it.cost }
     val monthKm = trips.filter { it.startTime >= monthStart }.sumOf { it.distanceKm }
-    val range = if (cons > 0) veh.fuelLevelL / cons * 100.0 else 0.0
+    val activeTrip = live.phase == Phase.RECORDING
+    val liters = if (activeTrip) live.fuelLeftL else veh.fuelLevelL
+    val range = if (activeTrip) live.rangeKm else if (cons > 0) veh.fuelLevelL / cons * 100.0 else 0.0
     val dist = if (asc.size >= 2) asc.last().odometerKm - asc.first().odometerKm else 0.0
     val perKm = if (dist > 0) asc.drop(1).sumOf { it.totalCost } / dist else 0.0
     val perUnit = if (s.distanceUnit == "MI") perKm * KM_PER_MI else perKm
@@ -95,7 +97,7 @@ fun HomeScreen(vm: AppViewModel, go: (String) -> Unit) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Hero(veh, fmt, range) }
+        item { Hero(veh, fmt, range, liters) }
 
         if (live.phase != Phase.IDLE) {
             item {
@@ -172,10 +174,10 @@ fun HomeScreen(vm: AppViewModel, go: (String) -> Unit) {
 }
 
 @Composable
-private fun Hero(v: Vehicle, fmt: Fmt, range: Double) {
+private fun Hero(v: Vehicle, fmt: Fmt, range: Double, liters: Double) {
     val c1 = MaterialTheme.colorScheme.primary
     val c2 = MaterialTheme.colorScheme.tertiary
-    val frac = if (v.tankL > 0) (v.fuelLevelL / v.tankL).coerceIn(0.0, 1.0).toFloat() else 0f
+    val frac = if (v.tankL > 0) (liters / v.tankL).coerceIn(0.0, 1.0).toFloat() else 0f
     Box(
         Modifier
             .fillMaxWidth()
@@ -183,34 +185,42 @@ private fun Hero(v: Vehicle, fmt: Fmt, range: Double) {
             .background(Brush.linearGradient(listOf(c1, c2)))
             .padding(20.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                listOf(v.make, v.model, v.plate).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { v.name },
-                color = Color.White.copy(alpha = 0.85f),
-                style = MaterialTheme.typography.labelLarge,
-            )
-            Text(stringResource(R.string.odometer), color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.labelMedium)
-            Text(fmt.dist(v.odometerKm, 0), color = Color.White, fontSize = 38.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(6.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(stringResource(R.string.fuel_tank), color = Color.White.copy(alpha = 0.85f))
-                Text(
-                    if (v.tankL > 0) "${fmt.vol(v.fuelLevelL, 1)} / ${fmt.vol(v.tankL, 0)}" else fmt.vol(v.fuelLevelL, 1),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        listOf(v.make, v.model, v.plate).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { v.name },
+                        color = Color.White.copy(alpha = 0.85f),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                    Text(stringResource(R.string.odometer), color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.labelMedium)
+                    Text(fmt.dist(v.odometerKm, 0), color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(6.dp))
+                    Text(stringResource(R.string.tank_level), color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        if (v.tankL > 0) "${fmt.vol(liters, 1)} / ${fmt.vol(v.tankL, 0)}" else fmt.vol(liters, 1),
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        stringResource(R.string.range_est, fmt.dist(range, 0)),
+                        color = Color.White.copy(alpha = 0.9f),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                Box(Modifier.size(width = 112.dp, height = 144.dp), contentAlignment = Alignment.Center) {
+                    TankGauge(frac, Modifier.fillMaxSize())
+                    if (v.tankL > 0) {
+                        Text("${(frac * 100).toInt()}%", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
-            LinearProgressIndicator(
-                progress = { frac },
-                modifier = Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)),
-                color = Color.White,
-                trackColor = Color.White.copy(alpha = 0.25f),
-            )
-            Text(
-                stringResource(R.string.range_est, fmt.dist(range, 0)),
-                color = Color.White.copy(alpha = 0.9f),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            if (v.tankL <= 0) {
+                Text(stringResource(R.string.set_tank_hint), color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
+            } else if (frac < 0.15f) {
+                Text(stringResource(R.string.low_fuel), color = Color(0xFFFFC857), fontWeight = FontWeight.Bold)
+            }
         }
     }
 }

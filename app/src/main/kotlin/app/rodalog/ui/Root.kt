@@ -132,7 +132,10 @@ fun RodaRoot(vm: AppViewModel, host: Host) {
     ) { pad ->
         NavHost(nav, startDestination = "home", modifier = Modifier.padding(pad)) {
             composable("home") { HomeScreen(vm) { r -> if (r == "vehicles") nav.navigate(r) else goTab(r) } }
-            composable("trips") { TripsScreen(vm, host) }
+            composable("trips") { TripsScreen(vm, host) { id -> nav.navigate("trip/$id") } }
+            composable("trip/{id}") { entry ->
+                TripDetailScreen(vm, entry.arguments?.getString("id") ?: "") { nav.popBackStack() }
+            }
             composable("fuel") { FuelScreen(vm) }
             composable("expenses") { ExpensesScreen(vm) }
             composable("more") { MoreScreen { r -> nav.navigate(r) } }
@@ -203,6 +206,7 @@ private fun RodaTopBar(
                             "reminders" -> R.string.reminders
                             "vehicles" -> R.string.vehicles
                             "settings" -> R.string.settings
+                            "trip/{id}" -> R.string.trip_detail
                             else -> R.string.app_name
                         }
                     ),

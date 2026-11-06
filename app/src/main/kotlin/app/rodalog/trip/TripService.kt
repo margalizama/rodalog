@@ -270,9 +270,9 @@ class TripService : Service() {
     private fun addRoute(l: Location) {
         val last = lastRouteLoc
         if (last == null || last.distanceTo(l) >= 40f * routeStep) {
-            route.add(String.format(Locale.US, "%.5f,%.5f", l.latitude, l.longitude))
+            route.add(String.format(Locale.US, "%.5f,%.5f,%d", l.latitude, l.longitude, lastKmh.toInt()))
             lastRouteLoc = l
-            if (route.size > 1500) {
+            if (route.size > 1200) {
                 val thinned = route.filterIndexed { i, _ -> i % 2 == 0 }
                 route.clear()
                 route.addAll(thinned)

@@ -43,7 +43,7 @@ import app.rodalog.trip.TripService
 import app.rodalog.util.Fmt
 
 @Composable
-fun TripsScreen(vm: AppViewModel, host: Host) {
+fun TripsScreen(vm: AppViewModel, host: Host, onOpen: (String) -> Unit) {
     val v by vm.current.collectAsState()
     val s by vm.settings.collectAsState()
     val trips by vm.trips.collectAsState()
@@ -51,7 +51,6 @@ fun TripsScreen(vm: AppViewModel, host: Host) {
     val fmt = remember(s) { Fmt(s) }
     val ctx = LocalContext.current
     val veh = v
-    var editing by remember { mutableStateOf<Trip?>(null) }
 
     // lee permTick para refrescar tras conceder permisos
     @Suppress("UNUSED_VARIABLE") val tick = host.permTick
@@ -179,7 +178,7 @@ fun TripsScreen(vm: AppViewModel, host: Host) {
             item { Text(stringResource(R.string.no_trips), color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         items(trips, key = { it.id }) { t ->
-            Card2(Modifier.fillMaxWidth(), onClick = { editing = t }) {
+            Card2(Modifier.fillMaxWidth(), onClick = { onOpen(t.id) }) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(fmt.dateTime(t.startTime), fontWeight = FontWeight.Bold)
                     Text(fmt.dist(t.distanceKm, 1), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
@@ -193,58 +192,9 @@ fun TripsScreen(vm: AppViewModel, host: Host) {
         }
         item { Spacer(Modifier.height(24.dp)) }
     }
-
-    val e = editing
-    if (e != null) {
-        TripDialog(
-            t = e,
-            fmt = fmt,
-            onDismiss = { editing = null },
-            onSave = {
-                vm.saveTrip(it)
-                editing = null
-            },
-            onDelete = {
-                vm.deleteTrip(e)
-                editing = null
-            },
-        )
-    }
 }
 
 private fun rangeOf(levelL: Double, liveCons: Double, base: Double): Double {
     val c = if (liveCons > 0) liveCons else if (base > 0) base else 8.0
     return levelL / c * 100.0
-}
-
-@Composable
-private fun TripDialog(t: Trip, fmt: Fmt, onDismiss: () -> Unit, onSave: (Trip) -> Unit, onDelete: () -> Unit) {
-    var category by remember { mutableStateOf(t.category) }
-    var notes by remember { mutableStateOf(t.notes) }
-    FormDialog(
-        title = fmt.dateTime(t.startTime),
-        onDismiss = onDismiss,
-        onSave = { onSave(t.copy(category = category, notes = notes)) },
-        onDelete = onDelete,
-    ) {
-        if (t.route.isNotBlank()) RouteSketch(t.route)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatTile(stringResource(R.string.distance), fmt.dist(t.distanceKm, 2), Modifier.weight(1f))
-            StatTile(stringResource(R.string.time), fmt.duration(t.movingSec), Modifier.weight(1f))
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatTile(stringResource(R.string.max_speed), fmt.speed(t.maxSpeedKmh), Modifier.weight(1f))
-            StatTile(stringResource(R.string.est_consumption), fmt.cons(t.consumptionL100), Modifier.weight(1f))
-        }
-        Text(
-            "${fmt.dist(t.startOdometerKm, 1)} → ${fmt.dist(t.endOdometerKm, 1)}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Choice(
-            listOf("PERSONAL" to stringResource(R.string.personal), "WORK" to stringResource(R.string.work)),
-            category,
-        ) { category = it }
-        TextF(notes, { notes = it }, stringResource(R.string.notes), single = false)
-    }
 }

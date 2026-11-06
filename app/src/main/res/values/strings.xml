@@ -135,4 +135,16 @@
     <string name="perm_background_help">In the settings screen choose Location → “Allow all the time”.</string>
     <string name="grant">Grant</string>
     <string name="about_text">RodaLog stores your data on this phone and syncs it to your own Google Sheet. Consumption and fuel left are estimates based on your fill-ups.</string>
+    <string name="trip_detail">Trip details</string>
+    <string name="no_route">This trip has no route data.</string>
+    <string name="tank_level">Approx. tank level</string>
+    <string name="low_fuel">Low fuel: time to refuel</string>
+    <string name="set_tank_hint">Set your tank capacity in Vehicles to see the level.</string>
+    <string name="trip_cost">Fuel cost (est.)</string>
+    <string name="stopped_time">Stopped</string>
+    <string name="moving_time">Moving</string>
+    <string name="map_credit">© OpenStreetMap contributors</string>
+    <string name="delete">Delete</string>
+    <string name="delete_trip_q">Delete this trip?</string>
+    <string name="speed_profile">Speed along the route (%1$s)</string>
 </resources>

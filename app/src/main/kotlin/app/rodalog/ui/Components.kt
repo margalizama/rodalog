@@ -259,7 +259,7 @@ fun RouteSketch(route: String, modifier: Modifier = Modifier, color: Color = Mat
     val pts = remember(route) {
         route.split(";").mapNotNull {
             val p = it.split(",")
-            if (p.size == 2) {
+            if (p.size >= 2) {
                 val la = p[0].toDoubleOrNull()
                 val lo = p[1].toDoubleOrNull()
                 if (la != null && lo != null) Pair(la, lo) else null

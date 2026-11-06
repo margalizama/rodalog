@@ -134,4 +134,16 @@
     <string name="perm_background_help">En la pantalla de ajustes elige Ubicación → “Permitir todo el tiempo”.</string>
     <string name="grant">Permitir</string>
     <string name="about_text">RodaLog guarda tus datos en este teléfono y los sincroniza con tu propia hoja de Google. El consumo y el combustible restante son estimaciones basadas en tus cargas.</string>
+    <string name="trip_detail">Detalle del viaje</string>
+    <string name="no_route">Este viaje no tiene datos de ruta.</string>
+    <string name="tank_level">Nivel aproximado del tanque</string>
+    <string name="low_fuel">Reserva: conviene cargar gasolina</string>
+    <string name="set_tank_hint">Configura la capacidad del tanque en Vehículos para ver el nivel.</string>
+    <string name="trip_cost">Costo de combustible (est.)</string>
+    <string name="stopped_time">Detenido</string>
+    <string name="moving_time">En movimiento</string>
+    <string name="map_credit">© Colaboradores de OpenStreetMap</string>
+    <string name="delete">Eliminar</string>
+    <string name="delete_trip_q">¿Eliminar este viaje?</string>
+    <string name="speed_profile">Velocidad en la ruta (%1$s)</string>
 </resources>
