@@ -71,3 +71,6 @@ Pila: Kotlin, Jetpack Compose (Material 3), Room, WorkManager, DataStore, Fused 
 - **Viaje protegido**: el viaje en curso se respalda cada 20 s y se recupera si el sistema cierra la app.
 - **Alerta de reserva** y **ajuste manual del nivel** (toca el tanque en Inicio).
 - Consumo estimado según la velocidad (instantáneo y promedio del viaje).
+
+## Novedades v1.3.0
+- **Carga automática**: si te detienes 2+ min en una gasolinera (guardada o detectada en OpenStreetMap) se registra una carga de tanque lleno con los litros estimados y recibes un aviso para confirmar litros y precio reales. Las cargas estimadas no distorsionan el cálculo de consumo hasta que las confirmes. Se puede desactivar en Ajustes.

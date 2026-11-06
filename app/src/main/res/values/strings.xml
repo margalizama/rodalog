@@ -184,4 +184,10 @@
     <string name="low_fuel_notif_title">Low fuel</string>
     <string name="low_fuel_notif_text">%1$s is at %2$s. About %3$s of range left.</string>
     <string name="ch_fuel">Fuel alerts</string>
+    <string name="auto_fuel_notif_title">Fill-up detected</string>
+    <string name="auto_fuel_notif_text">%1$s at %2$s: about %3$s added (full tank assumed). Open Fuel to confirm the real liters and price.</string>
+    <string name="auto_fuel_hint">Estimated · tap to confirm liters and price</string>
+    <string name="auto_fuel_dialog_hint">Detected automatically assuming a full tank. Enter the real liters and price from your receipt.</string>
+    <string name="auto_refuel_switch">Detect fill-ups</string>
+    <string name="auto_refuel_desc">If you stop at a gas station, a full-tank fill-up is logged for you to confirm.</string>
 </resources>

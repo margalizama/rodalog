@@ -10,6 +10,12 @@ object Stats {
         var lastFullOdo: Double? = null
         var acc = 0.0
         for (e in entriesAsc) {
+            if (e.isAuto && e.fullTank) {
+                // litros estimados: no sirven para calcular el intervalo anterior, pero sí marcan tanque lleno
+                lastFullOdo = e.odometerKm
+                acc = 0.0
+                continue
+            }
             if (lastFullOdo != null) {
                 acc += e.liters
                 if (e.fullTank) {

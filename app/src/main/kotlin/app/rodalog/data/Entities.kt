@@ -110,12 +110,16 @@ data class FuelEntry(
 ) : SheetRecord {
     val pricePerLiter: Double get() = if (liters > 0) totalCost / liters else 0.0
 
+    /** Carga detectada sola con litros estimados; deja de serlo cuando el usuario la confirma o edita. */
+    val isAuto: Boolean get() = notes.startsWith(AUTO_TAG)
+
     override fun toRow(): List<Any> = listOf(
         id, vehicleId, date.toIso(), odometerKm, liters, totalCost, if (fullTank) 1 else 0,
         station, notes, updatedAt, if (deleted) 1 else 0
     )
 
     companion object {
+        const val AUTO_TAG = "[AUTO]"
         const val TAB = "Combustible"
         val HEADERS = listOf(
             "id", "vehiculo_id", "fecha", "odometro_km", "litros", "costo_total",

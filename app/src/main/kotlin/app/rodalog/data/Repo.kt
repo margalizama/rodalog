@@ -46,6 +46,17 @@ class Repo(private val ctx: Context) {
         sync()
     }
 
+    /**
+     * Carga detectada durante un viaje. No toca el odómetro (el viaje lo suma al terminar) y deja el
+     * nivel en `baseLevelL` = tanque + combustible ya gastado en el viaje, para que al cerrar el viaje quede bien.
+     */
+    suspend fun autoFuel(e: FuelEntry, baseLevelL: Double) {
+        db.fuel().upsert(e.copy(updatedAt = touch(), dirty = true))
+        val v = db.vehicles().get(e.vehicleId)
+        if (v != null) db.vehicles().upsert(v.copy(fuelLevelL = baseLevelL, updatedAt = touch(), dirty = true))
+        sync()
+    }
+
     suspend fun deleteFuel(e: FuelEntry) {
         db.fuel().upsert(e.copy(deleted = true, updatedAt = touch(), dirty = true))
         sync()

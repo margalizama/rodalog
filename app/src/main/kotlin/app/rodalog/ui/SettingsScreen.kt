@@ -203,6 +203,19 @@ fun SettingsScreen(vm: AppViewModel, host: Host) {
                     ) { vm.setLowFuel(true, it.toInt()) }
                 }
                 Spacer(Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.auto_refuel_switch), fontWeight = FontWeight.Bold)
+                        Text(
+                            stringResource(R.string.auto_refuel_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.size(8.dp))
+                    Switch(checked = s.autoRefuel, onCheckedChange = { vm.setAutoRefuel(it) })
+                }
+                Spacer(Modifier.height(12.dp))
                 Text(stringResource(R.string.place_min_visits), fontWeight = FontWeight.Bold)
                 Text(
                     stringResource(R.string.place_min_visits_desc),

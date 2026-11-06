@@ -191,6 +191,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { repo.prefs.setLowFuel(on, pct) }
     }
 
+    fun setAutoRefuel(on: Boolean) {
+        viewModelScope.launch { repo.prefs.setAutoRefuel(on) }
+    }
+
     fun setPlaceMinVisits(n: Int) {
         viewModelScope.launch { repo.prefs.setPlaceMinVisits(n) }
     }

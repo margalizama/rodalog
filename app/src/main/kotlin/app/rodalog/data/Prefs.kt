@@ -30,6 +30,7 @@ data class Settings(
     val lowFuelAlert: Boolean = true,
     val lowFuelPct: Int = 15,
     val placeMinVisits: Int = 4,
+    val autoRefuel: Boolean = true,
 ) {
     companion object {
         private val imperial = setOf("US", "GB", "LR", "MM")
@@ -56,6 +57,7 @@ class Prefs(private val ctx: Context) {
         val lowAlert = booleanPreferencesKey("low_alert")
         val lowPct = intPreferencesKey("low_pct")
         val minVisits = intPreferencesKey("min_visits")
+        val autoRefuel = booleanPreferencesKey("auto_refuel")
     }
 
     private fun Preferences.toSettings() = Settings(
@@ -71,6 +73,7 @@ class Prefs(private val ctx: Context) {
         lowFuelAlert = this[K.lowAlert] ?: true,
         lowFuelPct = this[K.lowPct] ?: 15,
         placeMinVisits = this[K.minVisits] ?: 4,
+        autoRefuel = this[K.autoRefuel] ?: true,
     )
 
     val flow: Flow<Settings> = ctx.store.data.map { it.toSettings() }
@@ -85,5 +88,6 @@ class Prefs(private val ctx: Context) {
     suspend fun setAutoTrips(on: Boolean) = ctx.store.edit { it[K.auto] = on }
     suspend fun setLastSync(t: Long) = ctx.store.edit { it[K.last] = t }
     suspend fun setLowFuel(on: Boolean, pct: Int) = ctx.store.edit { it[K.lowAlert] = on; it[K.lowPct] = pct }
+    suspend fun setAutoRefuel(on: Boolean) = ctx.store.edit { it[K.autoRefuel] = on }
     suspend fun setPlaceMinVisits(n: Int) = ctx.store.edit { it[K.minVisits] = n }
 }

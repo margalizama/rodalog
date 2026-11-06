@@ -258,13 +258,15 @@ object PlaceManager {
         }
     }
 
-    /** Consulta OpenStreetMap (Nominatim) para saber si es gasolinera, comercio y su dirección. */
-    private suspend fun lookup(p: Place): Place? = withContext(Dispatchers.IO) {
+    private data class Osm(val kind: String, val name: String, val address: String)
+
+    /** Consulta OpenStreetMap (Nominatim): tipo de lugar (GAS/SHOP/OTHER), nombre y dirección. null si falla. */
+    private suspend fun osm(lat: Double, lon: Double): Osm? = withContext(Dispatchers.IO) {
         try {
             val lang = Locale.getDefault().toLanguageTag()
-            val url = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${p.lat}&lon=${p.lon}" +
+            val url = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=$lat&lon=$lon" +
                 "&zoom=18&addressdetails=1&accept-language=$lang"
-            val req = Request.Builder().url(url).header("User-Agent", "RodaLog/1.2 (app.rodalog)").build()
+            val req = Request.Builder().url(url).header("User-Agent", "RodaLog/1.3 (app.rodalog)").build()
             client.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) return@withContext null
                 val body = resp.body?.string() ?: return@withContext null
@@ -279,29 +281,47 @@ object PlaceManager {
                 if (address.isBlank()) {
                     address = j.optString("display_name").split(",").take(2).joinToString(",").trim()
                 }
-                val osmKind = when {
+                val kind = when {
                     cat == "amenity" && type == "fuel" -> "GAS"
                     name.isNotBlank() && cat in SHOP_CATS && !(cat == "amenity" && type in NON_PLACE) -> "SHOP"
                     else -> "OTHER"
                 }
-                val kind = when {
-                    osmKind == "GAS" -> "GAS"
-                    osmKind == "SHOP" && p.kind == "HOME" -> "SHOP"
-                    p.kind == "OTHER" -> osmKind
-                    else -> p.kind
-                }
-                p.copy(
-                    kind = kind,
-                    osmName = name,
-                    address = address,
-                    lookedUp = true,
-                    updatedAt = System.currentTimeMillis(),
-                    dirty = true,
-                )
+                Osm(kind, name, address)
             }
         } catch (e: Exception) {
             null
         }
+    }
+
+    private suspend fun lookup(p: Place): Place? {
+        val o = osm(p.lat, p.lon) ?: return null
+        val kind = when {
+            o.kind == "GAS" -> "GAS"
+            o.kind == "SHOP" && p.kind == "HOME" -> "SHOP"
+            p.kind == "OTHER" -> o.kind
+            else -> p.kind
+        }
+        return p.copy(
+            kind = kind,
+            osmName = o.name,
+            address = o.address,
+            lookedUp = true,
+            updatedAt = System.currentTimeMillis(),
+            dirty = true,
+        )
+    }
+
+    /**
+     * ¿Es una gasolinera? Primero busca entre los lugares ya guardados (funciona sin internet) y si no,
+     * pregunta a OpenStreetMap. Devuelve el nombre ("" si no tiene) o null si no es gasolinera / no se pudo saber.
+     */
+    suspend fun gasStationAt(ctx: Context, lat: Double, lon: Double): String? {
+        val known = PlaceDb.get(ctx.applicationContext).places().all()
+            .filter { !it.deleted && it.confirmed && it.kind == "GAS" && distanceM(it.lat, it.lon, lat, lon) <= RADIUS_M }
+            .minByOrNull { distanceM(it.lat, it.lon, lat, lon) }
+        if (known != null) return known.name.ifBlank { known.osmName }
+        val o = osm(lat, lon) ?: return null
+        return if (o.kind == "GAS") o.name else null
     }
 
     // ------------------------------------------------------------ Títulos de viaje

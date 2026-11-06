@@ -112,6 +112,13 @@ fun FuelScreen(vm: AppViewModel) {
                             )
                         }
                     }
+                    if (e.isAuto) {
+                        Text(
+                            stringResource(R.string.auto_fuel_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.tertiary,
+                        )
+                    }
                     val point = byDate[e.date]
                     if (point != null) {
                         Text(
@@ -154,7 +161,7 @@ private fun FuelDialog(
     var cost by remember { mutableStateOf(if (initial != null) fmt.num(initial.totalCost, 2) else "") }
     var full by remember { mutableStateOf(initial?.fullTank ?: true) }
     var station by remember { mutableStateOf(initial?.station ?: "") }
-    var notes by remember { mutableStateOf(initial?.notes ?: "") }
+    var notes by remember { mutableStateOf((initial?.notes ?: "").removePrefix(FuelEntry.AUTO_TAG).trim()) }
 
     val l = liters.toNum()
     val c = cost.toNum()
@@ -179,6 +186,13 @@ private fun FuelDialog(
             )
         },
     ) {
+        if (initial?.isAuto == true) {
+            Text(
+                stringResource(R.string.auto_fuel_dialog_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+        }
         DateField(stringResource(R.string.date), date, fmt) { date = it }
         NumField(odo, { odo = it }, "${stringResource(R.string.odometer)} (${fmt.distUnit})")
         NumField(liters, { liters = it }, "${stringResource(R.string.quantity)} (${fmt.volUnit})")

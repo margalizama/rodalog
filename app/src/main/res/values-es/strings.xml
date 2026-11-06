@@ -183,4 +183,10 @@
     <string name="low_fuel_notif_title">Reserva de combustible</string>
     <string name="low_fuel_notif_text">%1$s está al %2$s. Quedan unos %3$s de autonomía.</string>
     <string name="ch_fuel">Alertas de combustible</string>
+    <string name="auto_fuel_notif_title">Carga detectada</string>
+    <string name="auto_fuel_notif_text">%1$s en %2$s: se agregaron unos %3$s (se asumió tanque lleno). Abre Combustible para confirmar los litros y el precio reales.</string>
+    <string name="auto_fuel_hint">Estimada · toca para confirmar litros y precio</string>
+    <string name="auto_fuel_dialog_hint">Detectada automáticamente asumiendo tanque lleno. Pon los litros y el precio reales de tu ticket.</string>
+    <string name="auto_refuel_switch">Detectar cargas de combustible</string>
+    <string name="auto_refuel_desc">Si te detienes en una gasolinera, se registra una carga de tanque lleno para que la confirmes.</string>
 </resources>

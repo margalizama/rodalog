@@ -115,6 +115,7 @@ class TripService : Service() {
     private var stopLat = 0.0
     private var stopLon = 0.0
     private val stops = ArrayList<String>()
+    private var refueled = false
 
     // alerta de reserva
     private var alertOn = true
@@ -237,6 +238,7 @@ class TripService : Service() {
         routeStep = 1
         stops.clear()
         stopSince = 0L
+        refueled = false
     }
 
     @SuppressLint("MissingPermission")
@@ -315,7 +317,29 @@ class TripService : Service() {
             if (stopSince > 0L && now - stopSince >= STOP_VISIT_MS) {
                 stops.add(String.format(Locale.US, "%.5f,%.5f,%d", stopLat, stopLon, stopSince))
             }
+            if (stopSince > 0L && now - stopSince >= AutoRefuel.MIN_STOP_MS) {
+                val v = vehicle
+                if (v != null) {
+                    val lat = stopLat
+                    val lon = stopLon
+                    val odo = startOdo + distanceM / 1000.0
+                    val used = fuelUsedL
+                    scope.launch { refuelCheck(v, lat, lon, now, odo, used) }
+                }
+            }
             stopSince = 0L
+        }
+    }
+
+    /** Parada larga en gasolinera → carga automática (tanque lleno). Ajusta el nivel base del vehículo en memoria. */
+    private suspend fun refuelCheck(v: Vehicle, lat: Double, lon: Double, time: Long, odo: Double, used: Double) {
+        try {
+            if (AutoRefuel.detect(applicationContext, v, lat, lon, time, odo, used)) {
+                refueled = true
+                lowAlerted = false
+                vehicle = vehicle?.copy(fuelLevelL = v.tankL + used)
+            }
+        } catch (e: Exception) {
         }
     }
 
@@ -415,14 +439,29 @@ class TripService : Service() {
             )
         } else null
         val stopList = TripCheckpoint.parseStops(stops.joinToString(";"))
+        val finalStop = if (recording && v != null && stopSince > 0L && endTime - stopSince >= AutoRefuel.MIN_STOP_MS)
+            Triple(stopLat, stopLon, stopSince) else null
+        val usedNow = fuelUsedL
+        val odoNow = startOdo + distanceM / 1000.0
         phase = Phase.IDLE
         scope.launch {
             try {
+                // el viaje terminó parado en una gasolinera: registrar la carga antes de cerrar el viaje
+                if (finalStop != null && v != null && trip != null) {
+                    try {
+                        AutoRefuel.detect(applicationContext, vehicle ?: v, finalStop.first, finalStop.second, endTime, odoNow, usedNow)
+                    } catch (e: Exception) {
+                    }
+                }
                 if (trip != null) {
                     repo.finishTrip(trip)
                     val arrivals = ArrayList<Arrival>(stopList)
                     if (endLoc != null) arrivals.add(Arrival(endLoc.latitude, endLoc.longitude, endTime))
                     PlaceManager.onArrivals(applicationContext, arrivals)
+                }
+                else if (refueled && v != null) {
+                    // el viaje fue demasiado corto para guardarse: el nivel queda lleno
+                    repo.db.vehicles().get(v.id)?.let { repo.setFuelLevel(it, it.tankL) }
                 }
             } catch (e: Exception) {
             } finally {

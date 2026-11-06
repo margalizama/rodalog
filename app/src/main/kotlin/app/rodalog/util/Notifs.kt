@@ -52,4 +52,26 @@ object Notifs {
         } catch (e: Exception) {
         }
     }
+
+    /** Carga detectada sola: pide confirmar litros y precio. */
+    fun autoFuel(ctx: Context, vehicleName: String, station: String, litersText: String) {
+        createChannels(ctx)
+        val open = PendingIntent.getActivity(
+            ctx, 78, Intent(ctx, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        val where = station.ifBlank { ctx.getString(R.string.place_gas) }
+        val n = NotificationCompat.Builder(ctx, CH_FUEL)
+            .setSmallIcon(R.drawable.ic_notif)
+            .setContentTitle(ctx.getString(R.string.auto_fuel_notif_title))
+            .setContentText(ctx.getString(R.string.auto_fuel_notif_text, vehicleName, where, litersText))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(ctx.getString(R.string.auto_fuel_notif_text, vehicleName, where, litersText)))
+            .setContentIntent(open)
+            .setAutoCancel(true)
+            .build()
+        try {
+            ctx.getSystemService(NotificationManager::class.java).notify(5300 + (vehicleName.hashCode() and 0xFF), n)
+        } catch (e: Exception) {
+        }
+    }
 }
