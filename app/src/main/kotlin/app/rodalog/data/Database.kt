@@ -105,6 +105,9 @@ interface TripDao {
     @Query("SELECT * FROM trips")
     suspend fun everything(): List<Trip>
 
+    @Query("SELECT * FROM trips WHERE deleted = 0 AND vehicleId = :vid ORDER BY startTime DESC LIMIT :n")
+    suspend fun recent(vid: String, n: Int): List<Trip>
+
     @Query("SELECT * FROM trips WHERE dirty = 1")
     suspend fun dirty(): List<Trip>
 

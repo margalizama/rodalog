@@ -5,6 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.rodalog.R
 import app.rodalog.data.Expense
+import app.rodalog.data.Place
+import app.rodalog.data.PlaceDb
+import app.rodalog.data.PlaceManager
 import app.rodalog.data.FuelEntry
 import app.rodalog.data.Reminder
 import app.rodalog.data.Repo
@@ -13,6 +16,7 @@ import app.rodalog.data.Trip
 import app.rodalog.data.Vehicle
 import app.rodalog.sync.Auth
 import app.rodalog.sync.SyncEngine
+import app.rodalog.sync.SyncWorker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,6 +57,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val trips: StateFlow<List<Trip>> =
         current.flatMapLatest { v -> if (v == null) flowOf(emptyList()) else repo.db.trips().observe(v.id) }
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val places: StateFlow<List<Place>> =
+        PlaceDb.get(app).places().observe().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val syncStatus = SyncEngine.status
     val authed = MutableStateFlow(false)
@@ -155,5 +162,36 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 report(e)
             }
         }
+    }
+
+    fun savePlace(p: Place) {
+        viewModelScope.launch {
+            PlaceDb.get(getApplication()).places().upsert(
+                p.copy(confirmed = true, updatedAt = System.currentTimeMillis(), dirty = true)
+            )
+            PlaceManager.retryLookups(getApplication())
+            SyncWorker.enqueue(getApplication())
+        }
+    }
+
+    fun deletePlace(p: Place) {
+        viewModelScope.launch {
+            PlaceDb.get(getApplication()).places().upsert(
+                p.copy(deleted = true, updatedAt = System.currentTimeMillis(), dirty = p.confirmed)
+            )
+            SyncWorker.enqueue(getApplication())
+        }
+    }
+
+    fun setFuelLevel(v: Vehicle, liters: Double) {
+        viewModelScope.launch { repo.setFuelLevel(v, liters) }
+    }
+
+    fun setLowFuel(on: Boolean, pct: Int) {
+        viewModelScope.launch { repo.prefs.setLowFuel(on, pct) }
+    }
+
+    fun setPlaceMinVisits(n: Int) {
+        viewModelScope.launch { repo.prefs.setPlaceMinVisits(n) }
     }
 }

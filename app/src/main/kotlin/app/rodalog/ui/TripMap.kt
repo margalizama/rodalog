@@ -14,6 +14,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import app.rodalog.data.RoutePoint
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
@@ -24,22 +25,6 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.TilesOverlay
 import java.io.File
-
-data class RoutePoint(val lat: Double, val lon: Double, val kmh: Int)
-
-/** Lee la ruta guardada ("lat,lon,kmh;lat,lon,kmh"). Acepta también el formato viejo "lat,lon". */
-fun parseRoute(route: String): List<RoutePoint> =
-    route.split(";").mapNotNull { s ->
-        val p = s.split(",")
-        if (p.size < 2) {
-            null
-        } else {
-            val la = p[0].toDoubleOrNull()
-            val lo = p[1].toDoubleOrNull()
-            val sp = if (p.size >= 3) (p[2].toIntOrNull() ?: 0) else 0
-            if (la != null && lo != null) RoutePoint(la, lo, sp) else null
-        }
-    }
 
 /** Colores por rango de velocidad (km/h): <30, 30-60, 60-90, >90. */
 val SPEED_COLORS = intArrayOf(0xFF2E7D32.toInt(), 0xFFF9A825.toInt(), 0xFFEF6C00.toInt(), 0xFFC62828.toInt())

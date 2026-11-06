@@ -35,11 +35,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.rodalog.R
+import app.rodalog.data.PlaceManager
+import app.rodalog.data.parseRoute
 import app.rodalog.util.Fmt
 import app.rodalog.util.KM_PER_MI
 
@@ -48,6 +51,8 @@ fun TripDetailScreen(vm: AppViewModel, tripId: String, onBack: () -> Unit) {
     val trips by vm.trips.collectAsState()
     val fuel by vm.fuel.collectAsState()
     val s by vm.settings.collectAsState()
+    val places by vm.places.collectAsState()
+    val ctx = LocalContext.current
     val fmt = remember(s) { Fmt(s) }
     val t = trips.firstOrNull { it.id == tripId }
 
@@ -94,7 +99,11 @@ fun TripDetailScreen(vm: AppViewModel, tripId: String, onBack: () -> Unit) {
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(fmt.dateTime(t.startTime), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            val title = PlaceManager.tripTitle(ctx, t, places)
+            Text(title ?: fmt.dateTime(t.startTime), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            if (title != null) {
+                Text(fmt.dateTime(t.startTime), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
 
             if (hasSpeed) {
                 SpeedLegend(fmt)

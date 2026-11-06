@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TwoWheeler
 import androidx.compose.material3.DropdownMenu
@@ -64,6 +65,7 @@ fun MoreScreen(go: (String) -> Unit) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         MoreItem(Icons.Filled.Notifications, stringResource(R.string.reminders)) { go("reminders") }
         MoreItem(Icons.Filled.DirectionsCar, stringResource(R.string.vehicles)) { go("vehicles") }
+        MoreItem(Icons.Filled.Place, stringResource(R.string.places)) { go("places") }
         MoreItem(Icons.Filled.Settings, stringResource(R.string.settings)) { go("settings") }
     }
 }

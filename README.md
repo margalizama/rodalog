@@ -65,3 +65,9 @@ gradle :app:assembleRelease      # Gradle 8.10+, JDK 17, Android SDK 35
 ```
 
 Pila: Kotlin, Jetpack Compose (Material 3), Room, WorkManager, DataStore, Fused Location, Google Identity Authorization + Sheets REST API.
+
+## Novedades v1.2.0
+- **Lugares frecuentes**: tras N visitas (4 por defecto, configurable) un lugar se guarda solo y se etiqueta (Casa, Trabajo, Gasolinera X, establecimiento). Los títulos de viaje pasan a "Casa → Trabajo". Se sincronizan en la pestaña `Lugares` de la hoja.
+- **Viaje protegido**: el viaje en curso se respalda cada 20 s y se recupera si el sistema cierra la app.
+- **Alerta de reserva** y **ajuste manual del nivel** (toca el tanque en Inicio).
+- Consumo estimado según la velocidad (instantáneo y promedio del viaje).

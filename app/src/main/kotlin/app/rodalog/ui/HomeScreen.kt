@@ -3,6 +3,7 @@
 package app.rodalog.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,10 +27,14 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,6 +67,7 @@ fun HomeScreen(vm: AppViewModel, go: (String) -> Unit) {
     val live by TripBus.state.collectAsState()
     val fmt = remember(s) { Fmt(s) }
     val veh = v
+    var adjust by remember { mutableStateOf(false) }
 
     if (veh == null) {
         EmptyState(
@@ -98,7 +104,7 @@ fun HomeScreen(vm: AppViewModel, go: (String) -> Unit) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Hero(veh, fmt, range, liters) }
+        item { Hero(veh, fmt, range, liters, activeTrip) { adjust = true } }
 
         if (live.phase != Phase.IDLE) {
             item {
@@ -172,10 +178,38 @@ fun HomeScreen(vm: AppViewModel, go: (String) -> Unit) {
             }
         }
     }
+    if (adjust && veh.tankL > 0) {
+        var lvl by remember(adjust) { mutableFloatStateOf((veh.fuelLevelL / veh.tankL).coerceIn(0.0, 1.0).toFloat()) }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { adjust = false },
+            title = { Text(stringResource(R.string.adjust_level)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.adjust_level_help))
+                    Text(
+                        "${(lvl * 100).toInt()}% · ${fmt.vol(lvl * veh.tankL, 1)}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Slider(value = lvl, onValueChange = { lvl = it }, steps = 19)
+                }
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    vm.setFuelLevel(veh, lvl * veh.tankL)
+                    adjust = false
+                }) { Text(stringResource(R.string.save)) }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { adjust = false }) { Text(stringResource(R.string.cancel)) }
+            },
+        )
+    }
 }
 
 @Composable
-private fun Hero(v: Vehicle, fmt: Fmt, range: Double, liters: Double) {
+private fun Hero(v: Vehicle, fmt: Fmt, range: Double, liters: Double, locked: Boolean, onAdjust: () -> Unit) {
     val c1 = MaterialTheme.colorScheme.primary
     val c2 = MaterialTheme.colorScheme.tertiary
     val frac = if (v.tankL > 0) (liters / v.tankL).coerceIn(0.0, 1.0).toFloat() else 0f
@@ -210,12 +244,18 @@ private fun Hero(v: Vehicle, fmt: Fmt, range: Double, liters: Double) {
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-                Box(Modifier.size(width = 112.dp, height = 144.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier.size(width = 112.dp, height = 144.dp).clickable(enabled = v.tankL > 0 && !locked) { onAdjust() },
+                    contentAlignment = Alignment.Center,
+                ) {
                     TankGauge(frac, Modifier.fillMaxSize())
                     if (v.tankL > 0) {
                         Text("${(frac * 100).toInt()}%", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                     }
                 }
+            }
+            if (v.tankL > 0 && !locked) {
+                Text(stringResource(R.string.adjust_hint), color = Color.White.copy(alpha = 0.75f), style = MaterialTheme.typography.bodySmall)
             }
             if (v.tankL <= 0) {
                 Text(stringResource(R.string.set_tank_hint), color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)

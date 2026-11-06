@@ -178,6 +178,45 @@ fun SettingsScreen(vm: AppViewModel, host: Host) {
             }
         }
 
+        // ------------------------------------------------ Alertas y lugares
+        item {
+            Card2(Modifier.fillMaxWidth()) {
+                SectionTitle(stringResource(R.string.alerts_places))
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.low_fuel_switch), fontWeight = FontWeight.Bold)
+                        Text(
+                            stringResource(R.string.low_fuel_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.size(8.dp))
+                    Switch(checked = s.lowFuelAlert, onCheckedChange = { vm.setLowFuel(it, s.lowFuelPct) })
+                }
+                if (s.lowFuelAlert) {
+                    Spacer(Modifier.height(6.dp))
+                    Choice(
+                        listOf("10" to "10%", "15" to "15%", "20" to "20%", "25" to "25%"),
+                        s.lowFuelPct.toString(),
+                    ) { vm.setLowFuel(true, it.toInt()) }
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(stringResource(R.string.place_min_visits), fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(R.string.place_min_visits_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(6.dp))
+                Choice(
+                    listOf("2" to "2", "3" to "3", "4" to "4", "5" to "5"),
+                    s.placeMinVisits.toString(),
+                ) { vm.setPlaceMinVisits(it.toInt()) }
+            }
+        }
+
         item {
             Text(
                 stringResource(R.string.about_text),

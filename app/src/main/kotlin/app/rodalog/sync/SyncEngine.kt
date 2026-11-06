@@ -2,6 +2,8 @@ package app.rodalog.sync
 
 import android.content.Context
 import app.rodalog.data.Expense
+import app.rodalog.data.Place
+import app.rodalog.data.PlaceDb
 import app.rodalog.data.FuelEntry
 import app.rodalog.data.Prefs
 import app.rodalog.data.Reminder
@@ -29,13 +31,14 @@ object SyncEngine {
     val status = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     private val lock = Mutex()
 
-    private val TABS = listOf(Vehicle.TAB, FuelEntry.TAB, Expense.TAB, Reminder.TAB, Trip.TAB)
+    private val TABS = listOf(Vehicle.TAB, FuelEntry.TAB, Expense.TAB, Reminder.TAB, Trip.TAB, Place.TAB)
 
     private fun headersFor(tab: String): List<String> = when (tab) {
         Vehicle.TAB -> Vehicle.HEADERS
         FuelEntry.TAB -> FuelEntry.HEADERS
         Expense.TAB -> Expense.HEADERS
         Reminder.TAB -> Reminder.HEADERS
+        Place.TAB -> Place.HEADERS
         else -> Trip.HEADERS
     }
 
@@ -83,6 +86,15 @@ object SyncEngine {
         try {
             val api = SheetsApi(token)
             val db = RodaDb.get(ctx)
+            val placeDao = PlaceDb.get(ctx).places()
+
+            // Hojas creadas con versiones anteriores pueden no tener todas las pestañas
+            val existingTabs = api.tabTitles(sheetId)
+            val missingTabs = TABS.filter { it !in existingTabs }
+            if (missingTabs.isNotEmpty()) {
+                api.addTabs(sheetId, missingTabs)
+                api.batchUpdateValues(sheetId, missingTabs.map { "$it!A1" to listOf(headersFor(it)) })
+            }
 
             syncTable(
                 api, sheetId, Vehicle.TAB, Vehicle.HEADERS,
@@ -123,6 +135,14 @@ object SyncEngine {
                 clean = { it.copy(dirty = false) },
                 all = { db.trips().everything() }, dirty = { db.trips().dirty() },
                 upsert = { db.trips().upsertAll(it) }
+            )
+            syncTable(
+                api, sheetId, Place.TAB, Place.HEADERS,
+                parse = { Place.fromRow(it) },
+                stamp = { r, t -> r.copy(updatedAt = t, dirty = true) },
+                clean = { it.copy(dirty = false) },
+                all = { placeDao.all() }, dirty = { placeDao.dirty() },
+                upsert = { placeDao.upsertAll(it) }
             )
 
             prefs.setLastSync(System.currentTimeMillis())

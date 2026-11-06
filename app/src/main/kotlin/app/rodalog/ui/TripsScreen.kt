@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.rodalog.R
+import app.rodalog.data.PlaceManager
 import app.rodalog.data.Trip
 import app.rodalog.trip.Phase
 import app.rodalog.trip.TripBus
@@ -47,6 +48,7 @@ fun TripsScreen(vm: AppViewModel, host: Host, onOpen: (String) -> Unit) {
     val v by vm.current.collectAsState()
     val s by vm.settings.collectAsState()
     val trips by vm.trips.collectAsState()
+    val places by vm.places.collectAsState()
     val live by TripBus.state.collectAsState()
     val fmt = remember(s) { Fmt(s) }
     val ctx = LocalContext.current
@@ -100,14 +102,14 @@ fun TripsScreen(vm: AppViewModel, host: Host, onOpen: (String) -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     StatTile(
-                        stringResource(R.string.est_consumption),
+                        stringResource(R.string.avg_trip_consumption),
                         if (active) fmt.cons(live.consumptionL100) else "—",
                         Modifier.weight(1f),
                         tint = MaterialTheme.colorScheme.secondary,
                     )
                     StatTile(
-                        stringResource(R.string.fuel_used),
-                        if (active) fmt.vol(live.fuelUsedL, 2) else "—",
+                        stringResource(R.string.instant_consumption),
+                        if (active && live.instantL100 > 0) fmt.cons(live.instantL100) else "—",
                         Modifier.weight(1f),
                         tint = MaterialTheme.colorScheme.secondary,
                     )
@@ -115,22 +117,30 @@ fun TripsScreen(vm: AppViewModel, host: Host, onOpen: (String) -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     StatTile(
+                        stringResource(R.string.fuel_used),
+                        if (active) fmt.vol(live.fuelUsedL, 2) else "—",
+                        Modifier.weight(1f),
+                        tint = MaterialTheme.colorScheme.secondary,
+                    )
+                    StatTile(
                         stringResource(R.string.fuel_left),
                         fmt.vol(if (active) live.fuelLeftL else veh.fuelLevelL, 1),
                         Modifier.weight(1f),
                     )
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     StatTile(
                         stringResource(R.string.range),
                         fmt.dist(if (active) live.rangeKm else rangeOf(veh.fuelLevelL, live.consumptionL100, veh.baseConsumption), 0),
                         Modifier.weight(1f),
                     )
+                    StatTile(
+                        stringResource(R.string.odometer),
+                        fmt.dist(if (active) live.odometerKm else veh.odometerKm, 1),
+                        Modifier.weight(1f),
+                    )
                 }
-                Spacer(Modifier.height(8.dp))
-                StatTile(
-                    stringResource(R.string.odometer),
-                    fmt.dist(if (active) live.odometerKm else veh.odometerKm, 1),
-                    Modifier.fillMaxWidth(),
-                )
                 Spacer(Modifier.height(12.dp))
                 if (active) {
                     Button(
@@ -180,8 +190,15 @@ fun TripsScreen(vm: AppViewModel, host: Host, onOpen: (String) -> Unit) {
         items(trips, key = { it.id }) { t ->
             Card2(Modifier.fillMaxWidth(), onClick = { onOpen(t.id) }) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(fmt.dateTime(t.startTime), fontWeight = FontWeight.Bold)
+                    Text(
+                        PlaceManager.tripTitle(ctx, t, places) ?: fmt.dateTime(t.startTime),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                    )
                     Text(fmt.dist(t.distanceKm, 1), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                }
+                if (PlaceManager.tripTitle(ctx, t, places) != null) {
+                    Text(fmt.dateTime(t.startTime), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Text(
                     "${fmt.duration(t.endTime / 1000 - t.startTime / 1000)} · ${fmt.speed(t.avgSpeedKmh)} · ${fmt.vol(t.fuelUsedL, 2)} · ${stringResource(if (t.category == "WORK") R.string.work else R.string.personal)}",

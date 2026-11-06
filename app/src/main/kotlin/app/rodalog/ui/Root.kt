@@ -140,6 +140,7 @@ fun RodaRoot(vm: AppViewModel, host: Host) {
             composable("expenses") { ExpensesScreen(vm) }
             composable("more") { MoreScreen { r -> nav.navigate(r) } }
             composable("reminders") { RemindersScreen(vm) }
+            composable("places") { PlacesScreen(vm) }
             composable("vehicles") { VehiclesScreen(vm, host) }
             composable("settings") { SettingsScreen(vm, host) }
         }
@@ -204,6 +205,7 @@ private fun RodaTopBar(
                     stringResource(
                         when (route) {
                             "reminders" -> R.string.reminders
+                            "places" -> R.string.places
                             "vehicles" -> R.string.vehicles
                             "settings" -> R.string.settings
                             "trip/{id}" -> R.string.trip_detail

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -26,6 +27,9 @@ data class Settings(
     val selectedVehicle: String = "",
     val autoTrips: Boolean = true,
     val lastSync: Long = 0L,
+    val lowFuelAlert: Boolean = true,
+    val lowFuelPct: Int = 15,
+    val placeMinVisits: Int = 4,
 ) {
     companion object {
         private val imperial = setOf("US", "GB", "LR", "MM")
@@ -49,6 +53,9 @@ class Prefs(private val ctx: Context) {
         val vehicle = stringPreferencesKey("vehicle")
         val auto = booleanPreferencesKey("auto")
         val last = longPreferencesKey("last")
+        val lowAlert = booleanPreferencesKey("low_alert")
+        val lowPct = intPreferencesKey("low_pct")
+        val minVisits = intPreferencesKey("min_visits")
     }
 
     private fun Preferences.toSettings() = Settings(
@@ -61,6 +68,9 @@ class Prefs(private val ctx: Context) {
         selectedVehicle = this[K.vehicle] ?: "",
         autoTrips = this[K.auto] ?: true,
         lastSync = this[K.last] ?: 0L,
+        lowFuelAlert = this[K.lowAlert] ?: true,
+        lowFuelPct = this[K.lowPct] ?: 15,
+        placeMinVisits = this[K.minVisits] ?: 4,
     )
 
     val flow: Flow<Settings> = ctx.store.data.map { it.toSettings() }
@@ -74,4 +84,6 @@ class Prefs(private val ctx: Context) {
     suspend fun setVehicle(id: String) = ctx.store.edit { it[K.vehicle] = id }
     suspend fun setAutoTrips(on: Boolean) = ctx.store.edit { it[K.auto] = on }
     suspend fun setLastSync(t: Long) = ctx.store.edit { it[K.last] = t }
+    suspend fun setLowFuel(on: Boolean, pct: Int) = ctx.store.edit { it[K.lowAlert] = on; it[K.lowPct] = pct }
+    suspend fun setPlaceMinVisits(n: Int) = ctx.store.edit { it[K.minVisits] = n }
 }

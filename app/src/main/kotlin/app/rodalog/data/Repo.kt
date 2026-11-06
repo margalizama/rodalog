@@ -23,6 +23,13 @@ class Repo(private val ctx: Context) {
         sync()
     }
 
+    /** Ajuste manual del nivel de combustible (litros). */
+    suspend fun setFuelLevel(v: Vehicle, liters: Double) {
+        val lvl = if (v.tankL > 0) liters.coerceIn(0.0, v.tankL) else maxOf(0.0, liters)
+        db.vehicles().upsert(v.copy(fuelLevelL = lvl, updatedAt = touch(), dirty = true))
+        sync()
+    }
+
     // ----- Combustible -----
     suspend fun saveFuel(e: FuelEntry, isNew: Boolean) {
         db.fuel().upsert(e.copy(updatedAt = touch(), dirty = true))
