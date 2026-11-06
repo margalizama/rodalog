@@ -1,0 +1,8 @@
+> Task :app:compileReleaseKotlin FAILED
+e: file:///home/runner/work/rodalog/rodalog/app/src/main/kotlin/app/rodalog/ui/HomeScreen.kt:213:46 Unresolved reference 'fillMaxSize'.
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin'.
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:compileReleaseKotlin'.
+Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionException: A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilation error. See log for more details
+BUILD FAILED in 3m 3s
